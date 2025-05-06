@@ -1,0 +1,135 @@
+// --- Image and Animation Variables ---
+let fridgeImg;
+let clickableImages = [];
+let displayedImagesInfo = [];
+let imageFiles = [
+  'cat.png', 'magnet.png', 'fish.png', 'art1.png', 'bread.png',
+  'bigclip.png', 'card.png', 'clip.png', 'feltmag.png', 'fish2.png',
+  'fishguy.png', 'glacier.png', 'oldlady.png', 'polo.png', 'shark.png',
+  'stars.png', 'stick.png', 'usgirls.png', 'yall.png', 'yum.png'
+];
+let fishImageFiles = ['fish.png', 'fish2.png'];
+let loadedFishImages = [];
+let swimmingFish = null;
+let fishSwimSpeed = 3;
+let fishSwimSize = 80;
+let totalClicks = 0;
+
+// --- Configuration for REGULAR STATIC image size ---
+let minImageWidthFraction = 0.5;
+let maxImageWidthFraction = 0.8;
+let minImageSizePx;
+let maxImageSizePx;
+
+// --- Title Text Configuration ---
+let titleText = "my fridge 2025";
+let titleSize = 48;
+let titleFont = 'cursive';
+let titleColor = [255, 100, 0];
+let titleYPosition = 50;
+
+function preload() {
+  // --- Load Images ---
+  try {
+    fridgeImg = loadImage('fridge.png');
+  } catch (error) {
+    // 
+  }
+
+  for (let filename of imageFiles) {
+    try {
+      let loadedImage = loadImage(filename);
+      clickableImages.push(loadedImage);
+      if (fishImageFiles.includes(filename)) {
+        loadedFishImages.push(loadedImage);
+      }
+    } catch (error) {
+      // 
+    }
+  }
+}
+
+function setup() {
+  createCanvas(400, 400);
+
+  // 
+  minImageSizePx = width * minImageWidthFraction;
+  maxImageSizePx = width * maxImageWidthFraction;
+}
+
+function draw() {
+  // 
+  imageMode(CORNER);
+  if (fridgeImg) {
+     image(fridgeImg, 50, 50, 300, 375);
+  } else {
+    // Minimal fallback if fridge didn't load
+    background(220);
+  }
+
+  //
+  push();
+  fill(titleColor[0], titleColor[1], titleColor[2]);
+  textSize(titleSize);
+  textFont(titleFont);
+  textAlign(CENTER, CENTER);
+  text(titleText, width / 2, titleYPosition);
+  pop();
+
+  // --- 3. Draw Static Images ---
+  imageMode(CENTER);
+  for (let imgInfo of displayedImagesInfo) {
+    image(imgInfo.img, imgInfo.x, imgInfo.y, imgInfo.w, imgInfo.h);
+  }
+
+  // --- 4. Update and Draw Swimming Fish ---
+  if (swimmingFish) {
+    imageMode(CENTER);
+    swimmingFish.x += swimmingFish.speed * swimmingFish.direction;
+    let fishH = fishSwimSize * (swimmingFish.img.height / swimmingFish.img.width);
+    image(swimmingFish.img, swimmingFish.x, swimmingFish.y, fishSwimSize, fishH );
+    let offScreenMargin = fishSwimSize;
+    if ((swimmingFish.direction === 1 && swimmingFish.x > width + offScreenMargin) ||
+        (swimmingFish.direction === -1 && swimmingFish.x < -offScreenMargin)) {
+      swimmingFish = null;
+    }
+  }
+}
+
+function mousePressed() {
+  totalClicks++;
+
+  // fish!
+  if (totalClicks > 0 && totalClicks % 3 === 0 && loadedFishImages.length > 0 && !swimmingFish) {
+    // --- Start Fish Animation ---
+    let randomFishIndex = floor(random(loadedFishImages.length));
+    let fishImg = loadedFishImages[randomFishIndex];
+    let direction = random() > 0.5 ? 1 : -1;
+    let startX = (direction === 1) ? -fishSwimSize : width + fishSwimSize;
+    let startY = random(height * 0.2, height * 0.8);
+    swimmingFish = {
+      img: fishImg, x: startX, y: startY,
+      speed: fishSwimSpeed, direction: direction, size: fishSwimSize
+    };
+
+  } else {
+    // random 
+    if (clickableImages.length === 0) { return; }
+
+    let randomIndex = floor(random(clickableImages.length));
+    let selectedImage = clickableImages[randomIndex];
+
+    // random pt 2
+    let randomW = random(minImageSizePx, maxImageSizePx);
+    let aspectRatio = selectedImage.height / selectedImage.width;
+    let randomH = randomW * aspectRatio;
+
+    //  random position
+    let randomX = random(width);
+    let randomY = random(height);
+
+    // image pushin
+    let newImageInfo = { img: selectedImage, x: randomX, y: randomY, w: randomW, h: randomH };
+    displayedImagesInfo.push(newImageInfo);
+  }
+}
